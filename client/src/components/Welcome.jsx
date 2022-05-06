@@ -28,6 +28,7 @@ const Welcome = () => {
     formData,
     handleChange,
     sendTransaction,
+    changeNetwork,
   } = useContext(TransactionContext);
 
   const handleSubmit = (e) => {
@@ -135,7 +136,15 @@ const Welcome = () => {
             >
               Send Now
             </button>
+
             {/* )} */}
+            <button
+              type="button"
+              onClick={changeNetwork}
+              className="text-white w-full mt-2 border-[1px] p-2 border-[#3d4f7c] rounded-full cursor-pointer "
+            >
+              Change Network
+            </button>
           </div>
         </div>
       </div>

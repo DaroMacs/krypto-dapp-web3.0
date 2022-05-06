@@ -15,7 +15,7 @@ const createEthereumContract = () => {
     signer
   );
 
-  console.log(provider, signer, transactionsContract);
+  return transactionsContract;
 };
 
 export const TransactionProvider = ({ children }) => {
@@ -27,8 +27,29 @@ export const TransactionProvider = ({ children }) => {
     message: "",
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [transactionCount, setTransactionCount] = useState(
+    localStorage.getItem("transactionCount")
+  );
+
   const handleChange = (e, name) => {
     setFormData((prevState) => ({ ...prevState, [name]: e.target.value }));
+  };
+
+  const changeNetwork = async ({ setError }) => {
+    try {
+      if (!window.ethereum) throw new Error("No crypto wallet found");
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [
+          {
+            chainId: "0x4", // hex of Ropsten
+          },
+        ],
+      });
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const checkIfWalletIsConnected = async () => {
@@ -69,8 +90,38 @@ export const TransactionProvider = ({ children }) => {
       if (!ethereum) return alert("Please install Metamask");
 
       //get the data from the form...
-      // const { addressTo, amount, keyword, message } = formData;
-      createEthereumContract();
+      const { addressTo, amount, keyword, message } = formData;
+      const transactionContract = createEthereumContract();
+      const parseAmount = ethers.utils.parseEther(amount);
+
+      await ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: currentAccount,
+            to: addressTo,
+            gas: "0x5208", //21000 gwei or 0.000021 eth
+            value: parseAmount._hex,
+          },
+        ],
+      });
+
+      const transactionHash = await transactionContract.addToBlockchain(
+        addressTo,
+        parseAmount,
+        keyword,
+        message
+      );
+
+      setIsLoading(true);
+      console.log(`Loading... - ${transactionHash.hash}`);
+      await transactionHash.wait();
+
+      setIsLoading(false);
+      console.log(`Success - ${transactionHash.hash}`);
+
+      const transactionCount = await transactionContract.getTransactionCount();
+      setTransactionCount(transactionCount.toNumber());
     } catch (error) {
       console.log(error);
       throw new Error("No Ethereum Object");
@@ -90,6 +141,7 @@ export const TransactionProvider = ({ children }) => {
         setFormData,
         handleChange,
         sendTransaction,
+        changeNetwork,
       }}
     >
       {children}
