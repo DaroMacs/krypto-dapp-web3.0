@@ -22,7 +22,7 @@ contract Transactions {
         transactionCount += 1;
         transactions.push(TransferStruct(msg.sender, receiver, amount, message, block.timestamp, keyword));
 
-        event Transfer(msg.sender, receiver, amount, message, block.timestamp, keyword);
+        emit Transfer(msg.sender, receiver, amount, message, block.timestamp, keyword);
     }
     
     function getOldTransactions() public view returns (TransferStruct[] memory){
